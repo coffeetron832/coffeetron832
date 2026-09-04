@@ -4,7 +4,7 @@ on:
   schedule:
     # Se ejecuta cada 5 horas
     - cron: '0 */5 * * *'
-  workflow_dispatch: # Permite probar la rotación manualmente desde Actions
+  workflow_dispatch: # Permite probar la rotación desde Actions
 
 jobs:
   actualizar-imagen:
