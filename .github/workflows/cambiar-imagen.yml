@@ -1,0 +1,45 @@
+name: Cambiar Banner del Perfil
+
+on:
+  schedule:
+    # Se ejecuta cada 5 horas (00:00, 05:00, 10:00, 15:00, 20:00 UTC)
+    - cron: '0 */5 * * *'
+  workflow_dispatch: # Permite ejecutar el cambio manualmente desde Actions
+
+jobs:
+  actualizar-imagen:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Cambiar imagen cada 5 horas (America/Bogota)
+        run: |
+          # Obtener la hora actual en número (0 a 23)
+          HORA=$(TZ="America/Bogota" date +%k | tr -d ' ')
+          echo "Hora actual en Colombia: $HORA:00"
+
+          # Bloques de 5 horas
+          if [ $HORA -ge 0 ] && [ $HORA -lt 5 ]; then
+            cp imagenes/bloque1.png banner-actual.png
+          elif [ $HORA -ge 5 ] && [ $HORA -lt 10 ]; then
+            cp imagenes/bloque2.png banner-actual.png
+          elif [ $HORA -ge 10 ] && [ $HORA -lt 15 ]; then
+            cp imagenes/bloque3.png banner-actual.png
+          elif [ $HORA -ge 15 ] && [ $HORA -lt 20 ]; then
+            cp imagenes/bloque4.png banner-actual.png
+          else
+            cp imagenes/bloque5.png banner-actual.png
+          fi
+
+      - name: Guardar y publicar cambios en GitHub
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add banner-actual.png
+          
+          # Solo hace commit si banner-actual.png cambió respecto al que estaba guardado
+          git diff --staged --quiet || (git commit -m "chore: actualizar banner dinámico del perfil" && git push)
