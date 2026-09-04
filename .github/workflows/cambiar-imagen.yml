@@ -2,7 +2,7 @@ name: Cambiar Banner del Perfil
 
 on:
   schedule:
-    # Se ejecuta cada 5 horas (00:00, 05:00, 10:00, 15:00, 20:00 UTC)
+    # Se ejecuta cada 5 horas para revisar la hora local
     - cron: '0 */5 * * *'
   workflow_dispatch: # Permite ejecutar el cambio manualmente desde Actions
 
@@ -16,23 +16,19 @@ jobs:
       - name: Descargar repositorio
         uses: actions/checkout@v4
 
-      - name: Cambiar imagen cada 5 horas (America/Bogota)
+      - name: Cambiar imagen (3 bloques) (America/Bogota)
         run: |
           # Obtener la hora actual en número (0 a 23)
           HORA=$(TZ="America/Bogota" date +%k | tr -d ' ')
           echo "Hora actual en Colombia: $HORA:00"
 
-          # Bloques de 5 horas
-          if [ $HORA -ge 0 ] && [ $HORA -lt 5 ]; then
+          # Evaluación de los 3 bloques principales
+          if [ $HORA -ge 0 ] && [ $HORA -lt 8 ]; then
             cp imagenes/bloque1.png banner-actual.png
-          elif [ $HORA -ge 5 ] && [ $HORA -lt 10 ]; then
+          elif [ $HORA -ge 8 ] && [ $HORA -lt 16 ]; then
             cp imagenes/bloque2.png banner-actual.png
-          elif [ $HORA -ge 10 ] && [ $HORA -lt 15 ]; then
-            cp imagenes/bloque3.png banner-actual.png
-          elif [ $HORA -ge 15 ] && [ $HORA -lt 20 ]; then
-            cp imagenes/bloque4.png banner-actual.png
           else
-            cp imagenes/bloque5.png banner-actual.png
+            cp imagenes/bloque3.png banner-actual.png
           fi
 
       - name: Guardar y publicar cambios en GitHub
