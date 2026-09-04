@@ -2,9 +2,9 @@ name: Cambiar Banner del Perfil
 
 on:
   schedule:
-    # Se ejecuta cada 5 horas para revisar la hora local
+    # Se ejecuta cada 5 horas
     - cron: '0 */5 * * *'
-  workflow_dispatch: # Permite ejecutar el cambio manualmente desde Actions
+  workflow_dispatch: # Permite probar la rotación manualmente desde Actions
 
 jobs:
   actualizar-imagen:
@@ -16,26 +16,32 @@ jobs:
       - name: Descargar repositorio
         uses: actions/checkout@v4
 
-      - name: Cambiar imagen (3 bloques) (America/Bogota)
+      - name: Rotar a la siguiente imagen secuencialmente
         run: |
-          # Obtener la hora actual en número (0 a 23)
-          HORA=$(TZ="America/Bogota" date +%k | tr -d ' ')
-          echo "Hora actual en Colombia: $HORA:00"
-
-          # Evaluación de los 3 bloques principales
-          if [ $HORA -ge 0 ] && [ $HORA -lt 8 ]; then
-            cp imagenes/bloque1.png banner-actual.png
-          elif [ $HORA -ge 8 ] && [ $HORA -lt 16 ]; then
-            cp imagenes/bloque2.png banner-actual.png
+          # 1. Verificar cuál es la última imagen usada (guardada en .ultimo_bloque)
+          if [ -f .ultimo_bloque ]; then
+            ULTIMO=$(cat .ultimo_bloque)
           else
-            cp imagenes/bloque3.png banner-actual.png
+            ULTIMO=3  # Si no existe el archivo, asumimos 3 para empezar en 1
           fi
+
+          # 2. Calcular el siguiente bloque en ciclo (1 -> 2 -> 3 -> 1)
+          SIGUIENTE=$(( (ULTIMO % 3) + 1 ))
+
+          echo "Último bloque mostrado: $ULTIMO"
+          echo "Copiando imagenes/bloque${SIGUIENTE}.png hacia banner-actual.png..."
+
+          # 3. Copiar la nueva imagen al banner principal
+          cp "imagenes/bloque${SIGUIENTE}.png" banner-actual.png
+
+          # 4. Guardar el estado del bloque actual para la próxima ejecución
+          echo $SIGUIENTE > .ultimo_bloque
 
       - name: Guardar y publicar cambios en GitHub
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add banner-actual.png
+          git add banner-actual.png .ultimo_bloque
           
-          # Solo hace commit si banner-actual.png cambió respecto al que estaba guardado
-          git diff --staged --quiet || (git commit -m "chore: actualizar banner dinámico del perfil" && git push)
+          # Realizar el commit del cambio
+          git diff --staged --quiet || (git commit -m "chore: rotar banner a la siguiente imagen" && git push)
